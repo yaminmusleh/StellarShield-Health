@@ -169,6 +169,7 @@ CREATE TABLE IF NOT EXISTS suit_telemetry (
     suit_id TEXT NOT NULL REFERENCES spacesuits(suit_id),
     recorded_at TIMESTAMPTZ DEFAULT NOW(),
     battery_percentage NUMERIC(5,2),
+    status TEXT,
     battery_temperature NUMERIC(5,2),
     battery_voltage NUMERIC(8,2),
     suit_temperature NUMERIC(5,2),
