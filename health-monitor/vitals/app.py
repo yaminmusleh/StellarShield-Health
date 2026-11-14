@@ -977,3 +977,253 @@ if memory_participant:
             file_name="memory_results.csv",
             mime="text/csv",
         )
+
+        import json
+import random
+import sqlite3
+import uuid
+
+from contextlib import closing
+from datetime import datetime, timezone
+
+
+st.divider()
+st.header("Cognitive Performance — Attention")
+st.caption(
+    "Visual search practice: count a target letter among similar letters. "
+    "This task is self-paced and has no clinical validation."
+)
+
+attention_database = app_folder / "daily_checkins.db"
+
+with closing(
+    sqlite3.connect(attention_database, timeout=10)
+) as connection:
+    with connection:
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS attention_results (
+                test_id TEXT PRIMARY KEY,
+                participant_code TEXT NOT NULL,
+                completed_at TEXT NOT NULL,
+                target_letter TEXT NOT NULL,
+                letter_grid TEXT NOT NULL,
+                target_count INTEGER NOT NULL,
+                submitted_count INTEGER NOT NULL,
+                absolute_error INTEGER NOT NULL,
+                total_letters INTEGER NOT NULL
+            )
+        """)
+
+attention_participant = st.text_input(
+    "Participant code for the attention test",
+    placeholder="Example: TEST001",
+    max_chars=40,
+    key="attention_participant",
+).strip()
+
+attention_test = st.session_state.get("attention_test")
+
+if (
+    attention_test is not None
+    and attention_test["participant"] != attention_participant
+):
+    del st.session_state["attention_test"]
+    attention_test = None
+
+if attention_test is None:
+    st.write(
+        "A grid of letters will appear. "
+        "Count how many times the target letter appears."
+    )
+
+    if st.button(
+        "Start Attention Test",
+        key="start_attention_test",
+        disabled=not attention_participant,
+    ):
+        letters = ["E", "F", "P", "R", "T"]
+        target = random.choice(letters)
+        target_count = random.randint(4, 12)
+
+        distractors = [
+            letter for letter in letters
+            if letter != target
+        ]
+
+        grid_letters = (
+            [target] * target_count
+            + random.choices(
+                distractors,
+                k=48 - target_count,
+            )
+        )
+
+        random.shuffle(grid_letters)
+
+        grid_rows = [
+            grid_letters[index:index + 8]
+            for index in range(0, 48, 8)
+        ]
+
+        st.session_state["attention_test"] = {
+            "test_id": str(uuid.uuid4()),
+            "participant": attention_participant,
+            "target": target,
+            "target_count": target_count,
+            "grid": grid_rows,
+            "stage": "search",
+        }
+
+        st.rerun()
+
+else:
+    st.caption(
+        f"Participant: {attention_test['participant']}"
+    )
+
+    if attention_test["stage"] == "search":
+        st.subheader(
+            f"Count the letter: {attention_test['target']}"
+        )
+
+        grid_text = "\n".join(
+            "   ".join(row)
+            for row in attention_test["grid"]
+        )
+
+        st.code(grid_text, language=None)
+
+        with st.form("attention_answer_form"):
+            submitted_count = st.number_input(
+                "How many times does the target letter appear?",
+                min_value=0,
+                max_value=48,
+                value=0,
+                step=1,
+            )
+
+            submit_attention = st.form_submit_button(
+                "Submit Attention Test"
+            )
+
+        if submit_attention:
+            absolute_error = abs(
+                submitted_count - attention_test["target_count"]
+            )
+
+            completed_at = datetime.now(timezone.utc).isoformat()
+
+            with closing(
+                sqlite3.connect(attention_database, timeout=10)
+            ) as connection:
+                with connection:
+                    connection.execute(
+                        """
+                        INSERT OR IGNORE INTO attention_results (
+                            test_id,
+                            participant_code,
+                            completed_at,
+                            target_letter,
+                            letter_grid,
+                            target_count,
+                            submitted_count,
+                            absolute_error,
+                            total_letters
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            attention_test["test_id"],
+                            attention_test["participant"],
+                            completed_at,
+                            attention_test["target"],
+                            json.dumps(attention_test["grid"]),
+                            attention_test["target_count"],
+                            int(submitted_count),
+                            absolute_error,
+                            48,
+                        ),
+                    )
+
+            st.session_state["attention_test"]["answer"] = int(
+                submitted_count
+            )
+            st.session_state["attention_test"]["error"] = (
+                absolute_error
+            )
+            st.session_state["attention_test"]["stage"] = "finished"
+
+            st.rerun()
+
+    elif attention_test["stage"] == "finished":
+        st.success("Attention test completed and saved.")
+
+        expected, submitted, difference = st.columns(3)
+
+        expected.metric(
+            "Actual Target Count",
+            attention_test["target_count"],
+        )
+        submitted.metric(
+            "Your Answer",
+            attention_test["answer"],
+        )
+        difference.metric(
+            "Absolute Counting Error",
+            attention_test["error"],
+        )
+
+        if attention_test["error"] == 0:
+            st.info("Your answer matches the target count.")
+        else:
+            st.info(
+                "Your answer differs from the target count by "
+                f"{attention_test['error']}."
+            )
+
+        if st.button(
+            "Start Another Attention Test",
+            key="restart_attention_test",
+        ):
+            del st.session_state["attention_test"]
+            st.rerun()
+
+if attention_participant:
+    with closing(
+        sqlite3.connect(attention_database, timeout=10)
+    ) as connection:
+        attention_history = pd.read_sql_query(
+            """
+            SELECT
+                completed_at,
+                target_letter,
+                target_count,
+                submitted_count,
+                absolute_error
+            FROM attention_results
+            WHERE participant_code = ?
+            ORDER BY completed_at
+            """,
+            connection,
+            params=(attention_participant,),
+        )
+
+    if not attention_history.empty:
+        st.subheader("Saved Attention Results")
+        st.dataframe(attention_history, hide_index=True)
+
+        attention_export = attention_history.copy()
+        attention_export.insert(
+            0,
+            "participant_code",
+            attention_participant,
+        )
+
+        st.download_button(
+            "Download Attention Results as CSV",
+            data=attention_export.to_csv(
+                index=False
+            ).encode("utf-8-sig"),
+            file_name="attention_results.csv",
+            mime="text/csv",
+        )    
