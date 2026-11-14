@@ -1227,3 +1227,1272 @@ if attention_participant:
             file_name="attention_results.csv",
             mime="text/csv",
         )    
+
+        import json
+import random
+import sqlite3
+import uuid
+
+from contextlib import closing
+from datetime import datetime, timezone
+
+
+st.divider()
+st.header("Cognitive Performance — Emotion Recognition")
+st.caption(
+    "Read five fictional scenarios and identify the emotion "
+    "each scenario is designed to express. "
+    "This practice task has no clinical validation."
+)
+
+emotion_database = app_folder / "daily_checkins.db"
+
+with closing(
+    sqlite3.connect(emotion_database, timeout=10)
+) as connection:
+    with connection:
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS emotion_results (
+                test_id TEXT PRIMARY KEY,
+                participant_code TEXT NOT NULL,
+                completed_at TEXT NOT NULL,
+                task_version TEXT NOT NULL,
+                correct_count INTEGER NOT NULL,
+                total_questions INTEGER NOT NULL,
+                responses_json TEXT NOT NULL
+            )
+        """)
+
+emotion_participant = st.text_input(
+    "Participant code for the emotion recognition task",
+    placeholder="Example: TEST001",
+    max_chars=40,
+    key="emotion_participant",
+).strip()
+
+emotion_test = st.session_state.get("emotion_test")
+
+if (
+    emotion_test is not None
+    and emotion_test["participant"] != emotion_participant
+):
+    del st.session_state["emotion_test"]
+    emotion_test = None
+
+if emotion_test is None:
+    st.write(
+        "Choose the emotion best supported by the words "
+        "and actions in each scenario."
+    )
+
+    if st.button(
+        "Start Emotion Recognition Task",
+        key="start_emotion_task",
+        disabled=not emotion_participant,
+    ):
+        scenario_bank = [
+            {
+                "id": "E01",
+                "text": (
+                    "A crew member receives a message saying their "
+                    "family is safe after a storm. They relax their "
+                    "shoulders and say, 'I can finally stop worrying.'"
+                ),
+                "answer": "Relief",
+                "options": ["Relief", "Anger", "Sadness", "Disgust"],
+            },
+            {
+                "id": "E02",
+                "text": (
+                    "After weeks of work, a crew member's experiment "
+                    "succeeds. They smile and say, 'This is wonderful! "
+                    "I am so pleased with the result.'"
+                ),
+                "answer": "Happiness",
+                "options": ["Happiness", "Fear", "Sadness", "Anger"],
+            },
+            {
+                "id": "E03",
+                "text": (
+                    "A crew member learns that a treasured personal "
+                    "photograph has been permanently lost. They lower "
+                    "their head and quietly say, 'I really miss having it.'"
+                ),
+                "answer": "Sadness",
+                "options": ["Sadness", "Happiness", "Relief", "Surprise"],
+            },
+            {
+                "id": "E04",
+                "text": (
+                    "Someone repeatedly deletes a crew member's work "
+                    "after being asked to stop. The crew member clenches "
+                    "their fists and says, 'This is unacceptable!'"
+                ),
+                "answer": "Anger",
+                "options": ["Anger", "Relief", "Happiness", "Surprise"],
+            },
+            {
+                "id": "E05",
+                "text": (
+                    "A crew member opens a storage box and unexpectedly "
+                    "finds a birthday gift. Their eyes widen and they "
+                    "say, 'I had no idea this was here!'"
+                ),
+                "answer": "Surprise",
+                "options": ["Surprise", "Sadness", "Disgust", "Anger"],
+            },
+            {
+                "id": "E06",
+                "text": (
+                    "A fictional simulator displays an approaching "
+                    "collision. A crew member trembles and says, "
+                    "'I am scared that we will be hit.'"
+                ),
+                "answer": "Fear",
+                "options": ["Fear", "Happiness", "Relief", "Disgust"],
+            },
+        ]
+
+        questions = random.sample(scenario_bank, 5)
+
+        for question in questions:
+            random.shuffle(question["options"])
+
+        st.session_state["emotion_test"] = {
+            "test_id": str(uuid.uuid4()),
+            "participant": emotion_participant,
+            "questions": questions,
+            "stage": "answer",
+        }
+
+        st.rerun()
+
+else:
+    st.caption(
+        f"Participant: {emotion_test['participant']}"
+    )
+
+    if emotion_test["stage"] == "answer":
+        answers = []
+
+        with st.form("emotion_answers_form"):
+            for index, question in enumerate(
+                emotion_test["questions"],
+                start=1,
+            ):
+                st.subheader(f"Scenario {index}")
+                st.write(question["text"])
+
+                answer = st.selectbox(
+                    "Which emotion does this scenario express?",
+                    options=[
+                        "Select an answer",
+                        *question["options"],
+                    ],
+                    key=f"emotion_{emotion_test['test_id']}_{index}",
+                )
+
+                answers.append(answer)
+
+            submitted_emotion = st.form_submit_button(
+                "Submit Emotion Recognition Task"
+            )
+
+        if submitted_emotion:
+            if "Select an answer" in answers:
+                st.warning(
+                    "Choose an answer for all five scenarios."
+                )
+            else:
+                responses = []
+
+                for question, answer in zip(
+                    emotion_test["questions"],
+                    answers,
+                ):
+                    responses.append({
+                        "scenario_id": question["id"],
+                        "scenario": question["text"],
+                        "your_answer": answer,
+                        "expected_answer": question["answer"],
+                        "correct": answer == question["answer"],
+                    })
+
+                correct_count = sum(
+                    response["correct"]
+                    for response in responses
+                )
+
+                with closing(
+                    sqlite3.connect(emotion_database, timeout=10)
+                ) as connection:
+                    with connection:
+                        connection.execute(
+                            """
+                            INSERT OR IGNORE INTO emotion_results (
+                                test_id,
+                                participant_code,
+                                completed_at,
+                                task_version,
+                                correct_count,
+                                total_questions,
+                                responses_json
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                emotion_test["test_id"],
+                                emotion_test["participant"],
+                                datetime.now(timezone.utc).isoformat(),
+                                "text_scenarios_v1",
+                                correct_count,
+                                len(responses),
+                                json.dumps(responses),
+                            ),
+                        )
+
+                st.session_state["emotion_test"]["responses"] = responses
+                st.session_state["emotion_test"]["score"] = correct_count
+                st.session_state["emotion_test"]["stage"] = "finished"
+
+                st.rerun()
+
+    elif emotion_test["stage"] == "finished":
+        st.success("Emotion recognition task completed and saved.")
+
+        st.metric(
+            "Answers Matching the Task Key",
+            f"{emotion_test['score']} / 5",
+        )
+
+        response_table = pd.DataFrame(
+            emotion_test["responses"]
+        )
+
+        st.dataframe(
+            response_table[
+                ["scenario_id", "your_answer", "expected_answer", "correct"]
+            ],
+            hide_index=True,
+        )
+
+        st.caption(
+            "Expected answers follow the fictional task's authored key."
+        )
+
+        if st.button(
+            "Start Another Emotion Recognition Task",
+            key="restart_emotion_task",
+        ):
+            del st.session_state["emotion_test"]
+            st.rerun()
+
+if emotion_participant:
+    with closing(
+        sqlite3.connect(emotion_database, timeout=10)
+    ) as connection:
+        emotion_history = pd.read_sql_query(
+            """
+            SELECT
+                completed_at,
+                task_version,
+                correct_count,
+                total_questions
+            FROM emotion_results
+            WHERE participant_code = ?
+            ORDER BY completed_at
+            """,
+            connection,
+            params=(emotion_participant,),
+        )
+
+    if not emotion_history.empty:
+        st.subheader("Saved Emotion Recognition Results")
+        st.dataframe(emotion_history, hide_index=True)
+
+        emotion_export = emotion_history.copy()
+        emotion_export.insert(
+            0,
+            "participant_code",
+            emotion_participant,
+        )
+
+        st.download_button(
+            "Download Emotion Recognition Results as CSV",
+            data=emotion_export.to_csv(
+                index=False
+            ).encode("utf-8-sig"),
+            file_name="emotion_recognition_results.csv",
+            mime="text/csv",
+        ) 
+
+        import json
+import random
+import sqlite3
+import uuid
+
+from contextlib import closing
+from datetime import datetime, timezone
+
+
+st.divider()
+st.header("Cognitive Performance — Decision Making")
+st.caption(
+    "Practice planning decisions using fictional resource constraints. "
+    "This task has no clinical validation."
+)
+
+decision_database = app_folder / "daily_checkins.db"
+
+with closing(
+    sqlite3.connect(decision_database, timeout=10)
+) as connection:
+    with connection:
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS decision_results (
+                test_id TEXT PRIMARY KEY,
+                participant_code TEXT NOT NULL,
+                completed_at TEXT NOT NULL,
+                task_version TEXT NOT NULL,
+                correct_count INTEGER NOT NULL,
+                total_questions INTEGER NOT NULL,
+                responses_json TEXT NOT NULL
+            )
+        """)
+
+decision_participant = st.text_input(
+    "Participant code for the decision-making task",
+    placeholder="Example: TEST001",
+    max_chars=40,
+    key="decision_participant",
+).strip()
+
+decision_test = st.session_state.get("decision_test")
+
+if (
+    decision_test is not None
+    and decision_test["participant"] != decision_participant
+):
+    del st.session_state["decision_test"]
+    decision_test = None
+
+if decision_test is None:
+    st.write(
+        "Read each goal and its constraints. "
+        "Choose the option that best satisfies the stated goal."
+    )
+
+    if st.button(
+        "Start Decision-Making Task",
+        key="start_decision_task",
+        disabled=not decision_participant,
+    ):
+        questions = [
+            {
+                "id": "D01",
+                "text": (
+                    "You have 10 energy units. Task A costs 4 units "
+                    "and gives 6 points. Task B costs 3 units and gives "
+                    "4 points. Task C costs 5 units and gives 9 points. "
+                    "Each task can be selected once. Choose the option "
+                    "that gives the most points without exceeding "
+                    "the energy budget."
+                ),
+                "options": [
+                    "Tasks A and B",
+                    "Tasks A and C",
+                    "Tasks B and C",
+                    "Tasks A, B and C",
+                ],
+                "answer": "Tasks A and C",
+                "explanation": (
+                    "A and C cost 9 energy units and give 15 points. "
+                    "A and B give 10 points. B and C give 13 points. "
+                    "All three tasks exceed the budget."
+                ),
+            },
+            {
+                "id": "D02",
+                "text": (
+                    "You have 10 GB of storage. Package A needs 6 GB "
+                    "and is worth 8 points. Package B needs 4 GB and "
+                    "is worth 5 points. Package C needs 5 GB and is "
+                    "worth 6 points. Packages cannot be split. "
+                    "Choose the option with the most points "
+                    "that fits within the storage limit."
+                ),
+                "options": [
+                    "Packages A and B",
+                    "Packages A and C",
+                    "Packages B and C",
+                    "Package C only",
+                ],
+                "answer": "Packages A and B",
+                "explanation": (
+                    "A and B use 10 GB and give 13 points. "
+                    "B and C give 11 points. A and C exceed "
+                    "the storage limit."
+                ),
+            },
+            {
+                "id": "D03",
+                "text": (
+                    "A fictional experiment requires three steps: "
+                    "calibration takes 2 minutes, measurement takes "
+                    "4 minutes, and upload takes 3 minutes. "
+                    "Calibration must finish before measurement. "
+                    "Measurement must finish before upload. "
+                    "You have 9 minutes and steps cannot overlap. "
+                    "Which plan completes all three steps?"
+                ),
+                "options": [
+                    "Calibration, then measurement, then upload",
+                    "Measurement, then calibration, then upload",
+                    "Upload, then calibration, then measurement",
+                    "Calibration, then upload, then measurement",
+                ],
+                "answer": (
+                    "Calibration, then measurement, then upload"
+                ),
+                "explanation": (
+                    "Calibration → measurement → upload respects "
+                    "both dependencies and takes exactly 9 minutes."
+                ),
+            },
+        ]
+
+        random.shuffle(questions)
+
+        for question in questions:
+            random.shuffle(question["options"])
+
+        st.session_state["decision_test"] = {
+            "test_id": str(uuid.uuid4()),
+            "participant": decision_participant,
+            "questions": questions,
+            "stage": "answer",
+        }
+
+        st.rerun()
+
+else:
+    st.caption(
+        f"Participant: {decision_test['participant']}"
+    )
+
+    if decision_test["stage"] == "answer":
+        answers = []
+
+        with st.form("decision_answers_form"):
+            for index, question in enumerate(
+                decision_test["questions"],
+                start=1,
+            ):
+                st.subheader(f"Decision {index}")
+                st.write(question["text"])
+
+                answer = st.selectbox(
+                    "Choose your decision",
+                    options=[
+                        "Select an answer",
+                        *question["options"],
+                    ],
+                    key=f"decision_{decision_test['test_id']}_{index}",
+                )
+
+                answers.append(answer)
+
+            submitted_decision = st.form_submit_button(
+                "Submit Decision-Making Task"
+            )
+
+        if submitted_decision:
+            if "Select an answer" in answers:
+                st.warning("Choose an answer for all three decisions.")
+            else:
+                responses = []
+
+                for question, answer in zip(
+                    decision_test["questions"],
+                    answers,
+                ):
+                    responses.append({
+                        "scenario_id": question["id"],
+                        "scenario": question["text"],
+                        "your_answer": answer,
+                        "expected_answer": question["answer"],
+                        "correct": answer == question["answer"],
+                        "explanation": question["explanation"],
+                    })
+
+                correct_count = sum(
+                    response["correct"]
+                    for response in responses
+                )
+
+                with closing(
+                    sqlite3.connect(decision_database, timeout=10)
+                ) as connection:
+                    with connection:
+                        connection.execute(
+                            """
+                            INSERT OR IGNORE INTO decision_results (
+                                test_id,
+                                participant_code,
+                                completed_at,
+                                task_version,
+                                correct_count,
+                                total_questions,
+                                responses_json
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                decision_test["test_id"],
+                                decision_test["participant"],
+                                datetime.now(timezone.utc).isoformat(),
+                                "planning_scenarios_v1",
+                                correct_count,
+                                len(responses),
+                                json.dumps(responses),
+                            ),
+                        )
+
+                st.session_state["decision_test"]["responses"] = responses
+                st.session_state["decision_test"]["score"] = correct_count
+                st.session_state["decision_test"]["stage"] = "finished"
+
+                st.rerun()
+
+    elif decision_test["stage"] == "finished":
+        st.success("Decision-making task completed and saved.")
+
+        st.metric(
+            "Decisions Matching the Task Goal",
+            f"{decision_test['score']} / 3",
+        )
+
+        for response in decision_test["responses"]:
+            with st.expander(
+                f"{response['scenario_id']} — Review your decision"
+            ):
+                st.write("Scenario:", response["scenario"])
+                st.write("Your answer:", response["your_answer"])
+                st.write("Expected answer:", response["expected_answer"])
+                st.write("Explanation:", response["explanation"])
+
+        if st.button(
+            "Start Another Decision-Making Task",
+            key="restart_decision_task",
+        ):
+            del st.session_state["decision_test"]
+            st.rerun()
+
+if decision_participant:
+    with closing(
+        sqlite3.connect(decision_database, timeout=10)
+    ) as connection:
+        decision_history = pd.read_sql_query(
+            """
+            SELECT
+                completed_at,
+                task_version,
+                correct_count,
+                total_questions
+            FROM decision_results
+            WHERE participant_code = ?
+            ORDER BY completed_at
+            """,
+            connection,
+            params=(decision_participant,),
+        )
+
+    if not decision_history.empty:
+        st.subheader("Saved Decision-Making Results")
+        st.dataframe(decision_history, hide_index=True)
+
+        decision_export = decision_history.copy()
+        decision_export.insert(
+            0,
+            "participant_code",
+            decision_participant,
+        )
+
+        st.download_button(
+            "Download Decision-Making Results as CSV",
+            data=decision_export.to_csv(
+                index=False
+            ).encode("utf-8-sig"),
+            file_name="decision_making_results.csv",
+            mime="text/csv",
+        )  
+
+        import json
+import random
+import sqlite3
+import uuid
+
+from contextlib import closing
+from datetime import datetime, timezone
+
+
+st.divider()
+st.header("Cognitive Performance — Spatial Orientation")
+st.caption(
+    "Practice mental rotation using four directions. "
+    "This task has no clinical validation."
+)
+
+spatial_database = app_folder / "daily_checkins.db"
+
+with closing(
+    sqlite3.connect(spatial_database, timeout=10)
+) as connection:
+    with connection:
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS spatial_results (
+                test_id TEXT PRIMARY KEY,
+                participant_code TEXT NOT NULL,
+                completed_at TEXT NOT NULL,
+                task_version TEXT NOT NULL,
+                correct_count INTEGER NOT NULL,
+                total_questions INTEGER NOT NULL,
+                responses_json TEXT NOT NULL
+            )
+        """)
+
+spatial_participant = st.text_input(
+    "Participant code for the spatial orientation task",
+    placeholder="Example: TEST001",
+    max_chars=40,
+    key="spatial_participant",
+).strip()
+
+spatial_test = st.session_state.get("spatial_test")
+
+if (
+    spatial_test is not None
+    and spatial_test["participant"] != spatial_participant
+):
+    del st.session_state["spatial_test"]
+    spatial_test = None
+
+if spatial_test is None:
+    st.write(
+        "Imagine rotating an arrow by the stated angle. "
+        "Choose the direction it will point after the rotation."
+    )
+
+    if st.button(
+        "Start Spatial Orientation Task",
+        key="start_spatial_task",
+        disabled=not spatial_participant,
+    ):
+        directions = ["North", "East", "South", "West"]
+        arrows = ["↑", "→", "↓", "←"]
+
+        combinations = [
+            (start, angle, turn)
+            for start in range(4)
+            for angle in [90, 180, 270]
+            for turn in ["clockwise", "counterclockwise"]
+        ]
+
+        selected = random.sample(combinations, 5)
+        questions = []
+
+        for start, angle, turn in selected:
+            steps = angle // 90
+
+            if turn == "counterclockwise":
+                steps = -steps
+
+            final_index = (start + steps) % 4
+            options = directions.copy()
+            random.shuffle(options)
+
+            questions.append({
+                "start_direction": directions[start],
+                "start_arrow": arrows[start],
+                "angle": angle,
+                "turn": turn,
+                "answer": directions[final_index],
+                "options": options,
+            })
+
+        st.session_state["spatial_test"] = {
+            "test_id": str(uuid.uuid4()),
+            "participant": spatial_participant,
+            "questions": questions,
+            "stage": "answer",
+        }
+
+        st.rerun()
+
+else:
+    st.caption(
+        f"Participant: {spatial_test['participant']}"
+    )
+
+    if spatial_test["stage"] == "answer":
+        answers = []
+
+        with st.form("spatial_answers_form"):
+            for index, question in enumerate(
+                spatial_test["questions"],
+                start=1,
+            ):
+                st.subheader(f"Rotation {index}")
+
+                st.markdown(
+                    f"### {question['start_arrow']} "
+                    f"{question['start_direction']}"
+                )
+
+                st.write(
+                    f"Rotate this arrow {question['angle']}° "
+                    f"{question['turn']}."
+                )
+
+                answer = st.selectbox(
+                    "Which direction will it point?",
+                    options=[
+                        "Select an answer",
+                        *question["options"],
+                    ],
+                    key=f"spatial_{spatial_test['test_id']}_{index}",
+                )
+
+                answers.append(answer)
+
+            submitted_spatial = st.form_submit_button(
+                "Submit Spatial Orientation Task"
+            )
+
+        if submitted_spatial:
+            if "Select an answer" in answers:
+                st.warning("Answer all five rotation questions.")
+            else:
+                responses = []
+
+                for question, answer in zip(
+                    spatial_test["questions"],
+                    answers,
+                ):
+                    responses.append({
+                        "start_direction": question["start_direction"],
+                        "angle": question["angle"],
+                        "turn": question["turn"],
+                        "your_answer": answer,
+                        "expected_answer": question["answer"],
+                        "correct": answer == question["answer"],
+                    })
+
+                correct_count = sum(
+                    response["correct"]
+                    for response in responses
+                )
+
+                with closing(
+                    sqlite3.connect(spatial_database, timeout=10)
+                ) as connection:
+                    with connection:
+                        connection.execute(
+                            """
+                            INSERT OR IGNORE INTO spatial_results (
+                                test_id,
+                                participant_code,
+                                completed_at,
+                                task_version,
+                                correct_count,
+                                total_questions,
+                                responses_json
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                spatial_test["test_id"],
+                                spatial_test["participant"],
+                                datetime.now(timezone.utc).isoformat(),
+                                "direction_rotations_v1",
+                                correct_count,
+                                len(responses),
+                                json.dumps(responses),
+                            ),
+                        )
+
+                st.session_state["spatial_test"]["responses"] = responses
+                st.session_state["spatial_test"]["score"] = correct_count
+                st.session_state["spatial_test"]["stage"] = "finished"
+
+                st.rerun()
+
+    elif spatial_test["stage"] == "finished":
+        st.success("Spatial orientation task completed and saved.")
+
+        st.metric(
+            "Correct Directions",
+            f"{spatial_test['score']} / 5",
+        )
+
+        st.dataframe(
+            pd.DataFrame(spatial_test["responses"]),
+            hide_index=True,
+        )
+
+        if st.button(
+            "Start Another Spatial Orientation Task",
+            key="restart_spatial_task",
+        ):
+            del st.session_state["spatial_test"]
+            st.rerun()
+
+if spatial_participant:
+    with closing(
+        sqlite3.connect(spatial_database, timeout=10)
+    ) as connection:
+        spatial_history = pd.read_sql_query(
+            """
+            SELECT
+                completed_at,
+                task_version,
+                correct_count,
+                total_questions
+            FROM spatial_results
+            WHERE participant_code = ?
+            ORDER BY completed_at
+            """,
+            connection,
+            params=(spatial_participant,),
+        )
+
+    if not spatial_history.empty:
+        st.subheader("Saved Spatial Orientation Results")
+        st.dataframe(spatial_history, hide_index=True)
+
+        spatial_export = spatial_history.copy()
+        spatial_export.insert(
+            0,
+            "participant_code",
+            spatial_participant,
+        )
+
+        st.download_button(
+            "Download Spatial Orientation Results as CSV",
+            data=spatial_export.to_csv(
+                index=False
+            ).encode("utf-8-sig"),
+            file_name="spatial_orientation_results.csv",
+            mime="text/csv",
+        )
+
+        import json
+import math
+import sqlite3
+import uuid
+
+from contextlib import closing
+from datetime import datetime, timezone
+
+
+st.divider()
+st.header("Cognitive Performance — Reaction Performance")
+st.caption(
+    "Wait for GO, then click or tap the panel as quickly as you can. "
+    "Complete five trials. Early presses are counted separately."
+)
+st.caption(
+    "Timing is measured in your browser. Device and display delays "
+    "can affect results. This practice task has no clinical validation."
+)
+
+reaction_database = app_folder / "daily_checkins.db"
+
+with closing(
+    sqlite3.connect(reaction_database, timeout=10)
+) as connection:
+    with connection:
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS reaction_results (
+                test_id TEXT PRIMARY KEY,
+                participant_code TEXT NOT NULL,
+                completed_at TEXT NOT NULL,
+                trial_times_json TEXT NOT NULL,
+                median_ms REAL NOT NULL,
+                false_starts INTEGER NOT NULL,
+                interruptions INTEGER NOT NULL
+            )
+        """)
+
+reaction_participant = st.text_input(
+    "Participant code for the reaction task",
+    placeholder="Example: TEST001",
+    max_chars=40,
+    key="reaction_participant",
+).strip()
+
+reaction_test = st.session_state.get("reaction_test")
+
+if (
+    reaction_test is not None
+    and reaction_test["participant"] != reaction_participant
+):
+    del st.session_state["reaction_test"]
+    reaction_test = None
+
+if reaction_test is None:
+    if st.button(
+        "Start Reaction Performance Task",
+        key="start_reaction_task",
+        disabled=not reaction_participant,
+    ):
+        st.session_state["reaction_test"] = {
+            "test_id": str(uuid.uuid4()),
+            "participant": reaction_participant,
+            "stage": "running",
+        }
+        st.rerun()
+
+else:
+    st.caption(
+        f"Participant: {reaction_test['participant']}"
+    )
+
+    if reaction_test["stage"] == "running":
+        st.info(
+            "Use the panel below. Finish all five trials before "
+            "changing other controls. Switching tabs interrupts "
+            "the current trial."
+        )
+
+        reaction_component = st.components.v2.component(
+            "reaction_performance_panel",
+            html="""
+                <button id="reaction-pad" type="button">
+                    Click to begin trial 1 of 5
+                </button>
+                <p id="reaction-status" aria-live="polite">
+                    Use a mouse click or a tap.
+                </p>
+            """,
+            css="""
+                #reaction-pad {
+                    width: 100%;
+                    min-height: 180px;
+                    border: 0;
+                    border-radius: 12px;
+                    padding: 24px;
+                    background: #334155;
+                    color: white;
+                    font: inherit;
+                    font-size: 24px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    touch-action: manipulation;
+                    user-select: none;
+                }
+
+                #reaction-status {
+                    font-family: var(--st-font);
+                    color: var(--st-text-color);
+                    margin-top: 12px;
+                }
+            """,
+            js="""
+                export default function({
+                    parentElement,
+                    data,
+                    setStateValue
+                }) {
+                    const panel = parentElement.querySelector(
+                        "#reaction-pad"
+                    );
+                    const status = parentElement.querySelector(
+                        "#reaction-status"
+                    );
+
+                    const times = [];
+                    let phase = "idle";
+                    let startedAt = 0;
+                    let falseStarts = 0;
+                    let interruptions = 0;
+                    let timer = null;
+                    let frame = null;
+
+                    function clearPending() {
+                        clearTimeout(timer);
+                        cancelAnimationFrame(frame);
+                    }
+
+                    function showIdle(message) {
+                        phase = "idle";
+                        panel.style.background = "#334155";
+                        panel.textContent =
+                            `Click to begin trial ${times.length + 1} of 5`;
+                        status.textContent = message;
+                    }
+
+                    function interruptTrial() {
+                        if (phase === "waiting" || phase === "ready") {
+                            clearPending();
+                            interruptions += 1;
+                            showIdle(
+                                "Trial interrupted. Click to try again."
+                            );
+                        }
+                    }
+
+                    function handleVisibility() {
+                        if (document.hidden) {
+                            interruptTrial();
+                        }
+                    }
+
+                    panel.onpointerdown = (event) => {
+                        if (!event.isPrimary || event.button !== 0) {
+                            return;
+                        }
+
+                        event.preventDefault();
+
+                        if (phase === "done") {
+                            return;
+                        }
+
+                        if (phase === "idle") {
+                            phase = "waiting";
+                            panel.style.background = "#9f1239";
+                            panel.textContent = "WAIT";
+                            status.textContent =
+                                "Wait until the panel says GO.";
+
+                            const delay = 1500 + Math.random() * 2500;
+
+                            timer = setTimeout(() => {
+                                frame = requestAnimationFrame(() => {
+                                    if (document.hidden) {
+                                        interruptTrial();
+                                        return;
+                                    }
+
+                                    panel.style.background = "#166534";
+                                    panel.textContent = "GO";
+                                    startedAt = performance.now();
+                                    phase = "ready";
+                                });
+                            }, delay);
+
+                            return;
+                        }
+
+                        if (phase === "waiting") {
+                            clearPending();
+                            falseStarts += 1;
+                            showIdle(
+                                "Too soon! This trial was not scored. " +
+                                `Early presses: ${falseStarts}.`
+                            );
+                            return;
+                        }
+
+                        if (phase === "ready") {
+                            const elapsed = performance.now() - startedAt;
+                            const reactionMs =
+                                Math.round(elapsed * 100) / 100;
+
+                            times.push(reactionMs);
+
+                            if (times.length === 5) {
+                                phase = "done";
+                                panel.style.background = "#334155";
+                                panel.textContent = "Completed";
+                                status.textContent = "Saving results...";
+
+                                setStateValue("result", {
+                                    test_id: data.test_id,
+                                    times_ms: times,
+                                    false_starts: falseStarts,
+                                    interruptions: interruptions
+                                });
+                            } else {
+                                showIdle(
+                                    `Trial ${times.length}: ` +
+                                    `${reactionMs.toFixed(1)} ms.`
+                                );
+                            }
+                        }
+                    };
+
+                    document.addEventListener(
+                        "visibilitychange",
+                        handleVisibility
+                    );
+                    window.addEventListener("blur", interruptTrial);
+
+                    return () => {
+                        clearPending();
+                        panel.onpointerdown = null;
+                        document.removeEventListener(
+                            "visibilitychange",
+                            handleVisibility
+                        );
+                        window.removeEventListener(
+                            "blur",
+                            interruptTrial
+                        );
+                    };
+                }
+            """,
+        )
+
+        component_result = reaction_component(
+            data={"test_id": reaction_test["test_id"]},
+            default={"result": None},
+            on_result_change=lambda: None,
+            key=f"reaction_panel_{reaction_test['test_id']}",
+        )
+
+        payload = component_result.result
+
+        if payload is not None:
+            try:
+                trial_times = [
+                    float(value)
+                    for value in payload["times_ms"]
+                ]
+
+                false_starts = int(payload["false_starts"])
+                interruptions = int(payload["interruptions"])
+
+                valid_result = (
+                    payload["test_id"] == reaction_test["test_id"]
+                    and len(trial_times) == 5
+                    and all(
+                        math.isfinite(value) and value >= 0
+                        for value in trial_times
+                    )
+                    and false_starts >= 0
+                    and interruptions >= 0
+                )
+            except (KeyError, TypeError, ValueError, OverflowError):
+                valid_result = False
+
+            if not valid_result:
+                st.error(
+                    "The result could not be validated. "
+                    "Reset the task and try again."
+                )
+            else:
+                median_ms = sorted(trial_times)[2]
+
+                with closing(
+                    sqlite3.connect(reaction_database, timeout=10)
+                ) as connection:
+                    with connection:
+                        connection.execute(
+                            """
+                            INSERT OR IGNORE INTO reaction_results (
+                                test_id,
+                                participant_code,
+                                completed_at,
+                                trial_times_json,
+                                median_ms,
+                                false_starts,
+                                interruptions
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                reaction_test["test_id"],
+                                reaction_test["participant"],
+                                datetime.now(timezone.utc).isoformat(),
+                                json.dumps(trial_times),
+                                median_ms,
+                                false_starts,
+                                interruptions,
+                            ),
+                        )
+
+                st.session_state["reaction_test"].update({
+                    "stage": "finished",
+                    "times": trial_times,
+                    "median_ms": median_ms,
+                    "false_starts": false_starts,
+                    "interruptions": interruptions,
+                })
+
+                st.rerun()
+
+    elif reaction_test["stage"] == "finished":
+        st.success("Reaction task completed and saved.")
+
+        median_column, early_column = st.columns(2)
+
+        median_column.metric(
+            "Median Reaction Time",
+            f"{reaction_test['median_ms']:.1f} ms",
+        )
+        early_column.metric(
+            "Early Presses",
+            reaction_test["false_starts"],
+        )
+
+        st.caption(
+            f"Interrupted trials: {reaction_test['interruptions']}"
+        )
+
+        trial_table = pd.DataFrame({
+            "Trial": [1, 2, 3, 4, 5],
+            "Reaction Time (ms)": reaction_test["times"],
+        })
+
+        st.dataframe(trial_table, hide_index=True)
+
+    if st.button(
+        "Reset Reaction Task",
+        key="reset_reaction_task",
+    ):
+        del st.session_state["reaction_test"]
+        st.rerun()
+
+if reaction_participant:
+    with closing(
+        sqlite3.connect(reaction_database, timeout=10)
+    ) as connection:
+        reaction_history = pd.read_sql_query(
+            """
+            SELECT
+                completed_at,
+                trial_times_json,
+                median_ms,
+                false_starts,
+                interruptions
+            FROM reaction_results
+            WHERE participant_code = ?
+            ORDER BY completed_at
+            """,
+            connection,
+            params=(reaction_participant,),
+        )
+
+    if not reaction_history.empty:
+        st.subheader("Saved Reaction Results")
+        st.dataframe(reaction_history, hide_index=True)
+
+        reaction_export = reaction_history.copy()
+        reaction_export.insert(
+            0,
+            "participant_code",
+            reaction_participant,
+        )
+
+        st.download_button(
+            "Download Reaction Results as CSV",
+            data=reaction_export.to_csv(
+                index=False
+            ).encode("utf-8-sig"),
+            file_name="reaction_performance_results.csv",
+            mime="text/csv",
+        ) 
+
+        
