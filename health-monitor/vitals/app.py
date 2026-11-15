@@ -20,7 +20,7 @@ import streamlit as st
 
 
 st.set_page_config(
-    page_title="Orbit OS | Astronaut Health Console",
+    page_title="StarShield | Astronaut Health Console",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -560,7 +560,7 @@ svg{width:15px;height:15px;stroke:#7a8aa3;fill:none;stroke-width:2;stroke-lineca
 @media(max-width:900px){.hide{display:none}}
 @media(prefers-reduced-motion:reduce){.ring:after,.d{animation:none}}
 </style></head><body><div class="bar">
-<div class="brand"><div class="ring"></div>ORBIT OS <span class="chip">AEROSPACE</span></div><div class="sep hide"></div>
+<div class="brand"><div class="ring"></div>StarShield <span class="chip">AEROSPACE</span></div><div class="sep hide"></div>
 <div class="it hide">MISSION<b>__MISSION__</b></div>
 <div class="it">MET<b id="met">—</b></div><div class="sep hide"></div>
 <div class="it">UTC<b id="utc">--:--:--</b></div>
@@ -588,7 +588,7 @@ tick();setInterval(tick,1000);
         import streamlit.components.v1 as components
         components.html(page, height=58)
     except Exception:
-        st.markdown('<div class="ox-panel"><div class="ox-pt">ORBIT OS · ' + html.escape(mission) + '</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="ox-panel"><div class="ox-pt">StarShield · ' + html.escape(mission) + '</div></div>', unsafe_allow_html=True)
 
 
 def render_overview():
@@ -3780,7 +3780,7 @@ if 'pending_profile_editor' in st.session_state:
 if st.session_state.get('active_page') not in PAGES: st.session_state['active_page']='Command Center'
 page = st.session_state['active_page']
 with st.sidebar:
-    st.markdown('<div class="orbit-brand"><span class="ox-ring"></span>ORBIT OS<i>AEROSPACE</i></div><div class="ox-navlabel">Applications &amp; telemetry</div>',unsafe_allow_html=True)
+    st.markdown('<div class="orbit-brand"><span class="ox-ring"></span>StarShield<i>AEROSPACE</i></div><div class="ox-navlabel">Applications &amp; telemetry</div>',unsafe_allow_html=True)
     for name,(_,icon,_) in PAGES.items():
         st.button(name,key='nav_'+name,icon=f':material/{icon}:',width='stretch',type='primary' if page==name else 'secondary',on_click=navigate_to,args=(name,))
     st.divider()
@@ -3802,5 +3802,5 @@ for notice_key in ['profile_saved_notice','muscle_saved_notice']:
     if notice_key in st.session_state:
         st.success(st.session_state.pop(notice_key))
 renderer()
-st.markdown('<div class="orbit-footer">ORBIT OS · EXPLORATORY PROTOTYPE · SOURCE DATASETS ARE INDEPENDENT · NO CLINICAL VALIDATION</div>',unsafe_allow_html=True)
+st.markdown('<div class="orbit-footer">StarShield · EXPLORATORY PROTOTYPE · SOURCE DATASETS ARE INDEPENDENT · NO CLINICAL VALIDATION</div>',unsafe_allow_html=True)
 render_floating_robot(page)
