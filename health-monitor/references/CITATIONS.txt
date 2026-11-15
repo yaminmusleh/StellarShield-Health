@@ -1,0 +1,10 @@
+NASA RadLab: https://visualization.osdr.nasa.gov/radlab/gui/overview
+API documentation: https://visualization.osdr.nasa.gov/radlab/gui/data-api/
+NASA HRP risks: https://www.nasa.gov/hrp/risks/
+BIDMC dataset DOI: 10.13026/C2208R
+Pimentel et al., Towards a Robust Estimation of Respiratory Rate from Pulse Oximeters, IEEE TBME 64(8), 1914–1923 (2016). DOI: 10.1109/TBME.2016.2613124
+Sleep-EDF dataset DOI: 10.13026/C2X676
+Kemp et al., Analysis of a sleep-dependent neuronal feedback loop: the slow-wave microcontinuity of the EEG. IEEE BME 47(9):1185–1194 (2000). DOI: 10.1109/10.867928
+BIDMC and Sleep-EDF are licensed under Open Data Commons Attribution License v1.0. Retain attribution and source notices when redistributing derived databases. See included licenses.
+Derived combined CSV and sleep-stage CSV retain source attribution and license. NASA material use guidance: https://www.nasa.gov/nasa-brand-center/images-and-media/
+No claim of NASA endorsement.
