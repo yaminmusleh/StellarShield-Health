@@ -91,7 +91,7 @@ StellarShield Health adopts a holistic approach to astronaut health by consideri
 
 ### 1. Physical Health
 - Heart Rate (HR)
-- Blood Oxygen Saturation (SpO₂)
+- Blood Oxygen Saturation  (SpO₂)
 - Blood Pressure
 - Body Temperature
 
