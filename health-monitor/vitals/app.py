@@ -20,7 +20,7 @@ import streamlit as st
 
 
 st.set_page_config(
-    page_title="StarShield | Astronaut Health Console",
+    page_title="Orbit OS | Astronaut Health Console",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -60,7 +60,7 @@ DEFAULT_GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "").strip() or "gemini-3.1
 st.markdown("<style>\n"+r"""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 :root{--ox-bg:#070a10;--ox-dock:#0a0f17;--ox-panel:#0e141d;--ox-panel2:#121a26;--ox-line:#1a2434;--ox-line2:#26344a;--ox-cyan:#22d3ee;--ox-cyan-soft:#7ee8f8;--ox-green:#34d399;--ox-amber:#f59e0b;--ox-red:#f43f5e;--ox-text:#e8eef7;--ox-muted:#7a8aa3;--ox-dim:#556278;
---StarShield-bg:#070a10;--StarShield-dock:#0a0f17;--StarShield-panel:#0e141d;--StarShield-panel-2:#121a26;--StarShield-border:#1a2434;--StarShield-cyan:#22d3ee;--StarShield-text:#e8eef7;--StarShield-muted:#7a8aa3;}
+--orbit-bg:#070a10;--orbit-dock:#0a0f17;--orbit-panel:#0e141d;--orbit-panel-2:#121a26;--orbit-border:#1a2434;--orbit-cyan:#22d3ee;--orbit-text:#e8eef7;--orbit-muted:#7a8aa3;}
 html,body,[data-testid="stAppViewContainer"],[data-testid="stSidebar"]{font-family:Inter,sans-serif;}
 .stApp,[data-testid="stAppViewContainer"],[data-testid="stMain"]{background:radial-gradient(900px 380px at 78% -8%,rgba(34,211,238,.055),transparent 62%),var(--ox-bg);color:var(--ox-text);}
 [data-testid="stHeader"]{background:transparent;}
@@ -71,7 +71,7 @@ h2{font-size:1.1rem!important;font-weight:600!important;letter-spacing:-.015em;}
 h3{font-size:.92rem!important;font-weight:600!important;}
 [data-testid="stMarkdownContainer"] p{line-height:1.6;}
 [data-testid="stCaptionContainer"] p{color:var(--ox-muted)!important;line-height:1.5;font-size:.76rem;}
-code,pre,[data-testid="stMetricValue"],.StarShield-mono{font-family:'JetBrains Mono',monospace!important;}
+code,pre,[data-testid="stMetricValue"],.orbit-mono{font-family:'JetBrains Mono',monospace!important;}
 [data-testid="stSidebar"]{background:var(--ox-dock);border-right:1px solid var(--ox-line);min-width:226px!important;max-width:250px!important;}
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"]{gap:.22rem;}
 [data-testid="stSidebar"] .stButton>button{width:100%;justify-content:flex-start;text-align:left;background:transparent;border:1px solid transparent;color:#aab8cc;font-weight:450;font-size:.78rem;padding:.38rem .65rem;min-height:34px;border-radius:7px;box-shadow:none;transition:background .15s,color .15s,border-color .15s;}
@@ -108,27 +108,27 @@ button:disabled{opacity:.45;}
 [data-testid="stAlert"] [data-testid="stMarkdownContainer"],[data-testid="stAlert"] p,[data-testid="stAlert"] li{color:var(--ox-text)!important;}
 [data-testid="stChatMessage"]{background:var(--ox-panel2);border:1px solid var(--ox-line);border-radius:10px;}
 hr{border-color:var(--ox-line)!important;}
-.StarShield-memory-words{display:flex;gap:.7rem;flex-wrap:wrap;background:var(--ox-panel2);border:1px solid rgba(34,211,238,.35);border-radius:10px;padding:1.2rem;margin:.5rem 0 1rem;}
-.StarShield-memory-words span{background:#16212f;color:var(--ox-text)!important;border:1px solid var(--ox-line2);border-radius:6px;padding:.55rem .8rem;font:600 1.05rem 'JetBrains Mono',monospace;}
-.StarShield-cognitive-value{font:600 1.1rem 'JetBrains Mono',monospace;color:var(--ox-cyan-soft);margin:.7rem 0;}
-.StarShield-brand{display:flex;align-items:center;gap:.55rem;color:var(--ox-text);font-weight:700;font-size:1.02rem;letter-spacing:.06em;padding:.3rem 0 .2rem;}
-.StarShield-brand i{font:600 .5rem 'JetBrains Mono',monospace;font-style:normal;letter-spacing:.1em;color:var(--ox-cyan-soft);border:1px solid rgba(34,211,238,.35);background:rgba(34,211,238,.08);border-radius:4px;padding:.15rem .35rem;}
-.StarShield-brand .ox-ring{width:20px;height:20px;position:relative;border:2px solid var(--ox-cyan);border-radius:50%;flex:none;}
-.StarShield-brand .ox-ring:after{content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:var(--ox-cyan);top:-4px;left:50%;margin-left:-2.5px;transform-origin:50% 13px;animation:ox-StarShield 6s linear infinite;box-shadow:0 0 8px var(--ox-cyan);}
+.orbit-memory-words{display:flex;gap:.7rem;flex-wrap:wrap;background:var(--ox-panel2);border:1px solid rgba(34,211,238,.35);border-radius:10px;padding:1.2rem;margin:.5rem 0 1rem;}
+.orbit-memory-words span{background:#16212f;color:var(--ox-text)!important;border:1px solid var(--ox-line2);border-radius:6px;padding:.55rem .8rem;font:600 1.05rem 'JetBrains Mono',monospace;}
+.orbit-cognitive-value{font:600 1.1rem 'JetBrains Mono',monospace;color:var(--ox-cyan-soft);margin:.7rem 0;}
+.orbit-brand{display:flex;align-items:center;gap:.55rem;color:var(--ox-text);font-weight:700;font-size:1.02rem;letter-spacing:.06em;padding:.3rem 0 .2rem;}
+.orbit-brand i{font:600 .5rem 'JetBrains Mono',monospace;font-style:normal;letter-spacing:.1em;color:var(--ox-cyan-soft);border:1px solid rgba(34,211,238,.35);background:rgba(34,211,238,.08);border-radius:4px;padding:.15rem .35rem;}
+.orbit-brand .ox-ring{width:20px;height:20px;position:relative;border:2px solid var(--ox-cyan);border-radius:50%;flex:none;}
+.orbit-brand .ox-ring:after{content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:var(--ox-cyan);top:-4px;left:50%;margin-left:-2.5px;transform-origin:50% 13px;animation:ox-orbit 6s linear infinite;box-shadow:0 0 8px var(--ox-cyan);}
 .ox-navlabel{font:500 .56rem 'JetBrains Mono',monospace;letter-spacing:.14em;color:var(--ox-dim);margin:.9rem 0 .35rem;text-transform:uppercase;}
-.StarShield-tag{display:inline-block;border:1px solid rgba(34,211,238,.35);border-radius:4px;background:rgba(34,211,238,.08);color:var(--ox-cyan-soft);padding:.18rem .42rem;font:500 .56rem 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;}
-.StarShield-tag.amber{color:#fbbf24;background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.35);}
-.StarShield-tag.muted{color:var(--ox-muted);background:rgba(122,138,163,.08);border-color:var(--ox-line2);}
-.StarShield-card{background:var(--ox-panel);border:1px solid var(--ox-line);border-radius:10px;padding:1rem 1.1rem;margin-bottom:.9rem;}
-.StarShield-card h3{margin:0 0 .8rem;font-size:.88rem!important;}
-.StarShield-card p{margin:.35rem 0;color:#aab8cc;font-size:.77rem;line-height:1.55;}
-.StarShield-kicker{font:500 .6rem 'JetBrains Mono',monospace;color:var(--ox-muted);letter-spacing:.09em;text-transform:uppercase;}
-.StarShield-caption{font:400 .62rem 'JetBrains Mono',monospace;color:var(--ox-muted);line-height:1.6;}
-.StarShield-profile{display:flex;align-items:center;gap:.75rem;margin:.8rem 0;}
-.StarShield-avatar{width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.4);border-radius:10px;color:var(--ox-cyan-soft);font:600 .95rem 'JetBrains Mono',monospace;}
-.StarShield-empty{background:#080c13;border:1px dashed var(--ox-line2);border-radius:10px;padding:1.4rem;text-align:center;color:var(--ox-muted);margin:.5rem 0 1rem;}
-.StarShield-empty strong{display:block;color:var(--ox-text);font-size:.88rem;margin-bottom:.45rem;}
-.StarShield-footer{border-top:1px solid var(--ox-line);margin-top:2rem;padding-top:.7rem;color:var(--ox-dim);font:400 .58rem 'JetBrains Mono',monospace;letter-spacing:.05em;}
+.orbit-tag{display:inline-block;border:1px solid rgba(34,211,238,.35);border-radius:4px;background:rgba(34,211,238,.08);color:var(--ox-cyan-soft);padding:.18rem .42rem;font:500 .56rem 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;}
+.orbit-tag.amber{color:#fbbf24;background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.35);}
+.orbit-tag.muted{color:var(--ox-muted);background:rgba(122,138,163,.08);border-color:var(--ox-line2);}
+.orbit-card{background:var(--ox-panel);border:1px solid var(--ox-line);border-radius:10px;padding:1rem 1.1rem;margin-bottom:.9rem;}
+.orbit-card h3{margin:0 0 .8rem;font-size:.88rem!important;}
+.orbit-card p{margin:.35rem 0;color:#aab8cc;font-size:.77rem;line-height:1.55;}
+.orbit-kicker{font:500 .6rem 'JetBrains Mono',monospace;color:var(--ox-muted);letter-spacing:.09em;text-transform:uppercase;}
+.orbit-caption{font:400 .62rem 'JetBrains Mono',monospace;color:var(--ox-muted);line-height:1.6;}
+.orbit-profile{display:flex;align-items:center;gap:.75rem;margin:.8rem 0;}
+.orbit-avatar{width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.4);border-radius:10px;color:var(--ox-cyan-soft);font:600 .95rem 'JetBrains Mono',monospace;}
+.orbit-empty{background:#080c13;border:1px dashed var(--ox-line2);border-radius:10px;padding:1.4rem;text-align:center;color:var(--ox-muted);margin:.5rem 0 1rem;}
+.orbit-empty strong{display:block;color:var(--ox-text);font-size:.88rem;margin-bottom:.45rem;}
+.orbit-footer{border-top:1px solid var(--ox-line);margin-top:2rem;padding-top:.7rem;color:var(--ox-dim);font:400 .58rem 'JetBrains Mono',monospace;letter-spacing:.05em;}
 .ox-pagehead{display:flex;align-items:baseline;gap:.9rem;flex-wrap:wrap;margin:.9rem 0 1rem;}
 .ox-pagehead h1{margin:0;padding:0;}
 .ox-pagehead span{color:var(--ox-muted);font-size:.8rem;}
@@ -212,10 +212,10 @@ hr{border-color:var(--ox-line)!important;}
 @keyframes ox-reveal{from{clip-path:inset(0 100% 0 0);}to{clip-path:inset(0 0 0 0);}}
 @keyframes ox-sweep{from{left:-90px;}to{left:100%;}}
 @keyframes ox-pulse{0%{box-shadow:0 0 0 0 currentColor;opacity:1;}70%{box-shadow:0 0 0 6px transparent;opacity:.55;}100%{box-shadow:0 0 0 0 transparent;opacity:1;}}
-@keyframes ox-StarShield{to{transform:rotate(360deg);}}
+@keyframes ox-orbit{to{transform:rotate(360deg);}}
 @media(max-width:1180px){.ox-grid{grid-template-columns:minmax(0,1fr);}.ox-row4,.ox-matrix{grid-template-columns:repeat(2,minmax(0,1fr));}.ox-row5{grid-template-columns:repeat(2,minmax(0,1fr));}.ox-row3{grid-template-columns:minmax(0,1fr);}}
 @media(max-width:760px){.stMainBlockContainer{padding:.8rem .6rem 2rem;}.ox-stats{grid-template-columns:repeat(2,minmax(0,1fr));}}
-@media(prefers-reduced-motion:reduce){.ox-panel,.ox-bar i,.ox-spark,.ox-trace svg,.ox-scan,.ox-dot,.StarShield-brand .ox-ring:after{animation:none!important;}}
+@media(prefers-reduced-motion:reduce){.ox-panel,.ox-bar i,.ox-spark,.ox-trace svg,.ox-scan,.ox-dot,.orbit-brand .ox-ring:after{animation:none!important;}}
 """+"\n</style>",unsafe_allow_html=True)
 
 
@@ -413,7 +413,7 @@ def ox_kpi(label, value, unit, tag, kind, foot_left, foot_right, spark=None, bar
 
 
 def ox_empty(title, text):
-    return f'<div class="StarShield-empty"><strong>{html.escape(title)}</strong>{html.escape(text)}</div>'
+    return f'<div class="orbit-empty"><strong>{html.escape(title)}</strong>{html.escape(text)}</div>'
 
 
 def ox_trace(frame, columns, colors, marker=None, height=230, time_col='Time [s]'):
@@ -560,7 +560,7 @@ svg{width:15px;height:15px;stroke:#7a8aa3;fill:none;stroke-width:2;stroke-lineca
 @media(max-width:900px){.hide{display:none}}
 @media(prefers-reduced-motion:reduce){.ring:after,.d{animation:none}}
 </style></head><body><div class="bar">
-<div class="brand"><div class="ring"></div>StarShield <span class="chip">AEROSPACE</span></div><div class="sep hide"></div>
+<div class="brand"><div class="ring"></div>ORBIT OS <span class="chip">AEROSPACE</span></div><div class="sep hide"></div>
 <div class="it hide">MISSION<b>__MISSION__</b></div>
 <div class="it">MET<b id="met">—</b></div><div class="sep hide"></div>
 <div class="it">UTC<b id="utc">--:--:--</b></div>
@@ -588,7 +588,7 @@ tick();setInterval(tick,1000);
         import streamlit.components.v1 as components
         components.html(page, height=58)
     except Exception:
-        st.markdown('<div class="ox-panel"><div class="ox-pt">StarShield · ' + html.escape(mission) + '</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="ox-panel"><div class="ox-pt">ORBIT OS · ' + html.escape(mission) + '</div></div>', unsafe_allow_html=True)
 
 
 def render_overview():
@@ -836,7 +836,7 @@ def render_radiation():
                     f"Recorded at {latest['timestamp']} — historical data."
                 )
 
-                StarShield_chart(valid_radiation, x="timestamp", ys=["absorbed_dose_rate"], unit="Absorbed dose rate (µGy/hour)")
+                orbit_chart(valid_radiation, x="timestamp", ys=["absorbed_dose_rate"], unit="Absorbed dose rate (µGy/hour)")
 
                 with st.expander("View radiation data"):
                     st.dataframe(instrument_data, hide_index=True)
@@ -1215,7 +1215,7 @@ def render_ai_insights():
     analysed, flagged = st.columns(2)
     analysed.metric("Readings Analysed", len(analysis_data))
     flagged.metric("Unusual Readings", len(unusual_rows))
-    StarShield_chart(analysis_data, x="Time [s]", ys=["model_score"], unit="Model score")
+    orbit_chart(analysis_data, x="Time [s]", ys=["model_score"], unit="Model score")
     selected_result = analysis_data.loc[analysis_data["Time [s]"] == selected_time]
     if selected_result.empty:
         st.info("The selected time contains estimated or invalid measurements and was excluded.")
@@ -1318,7 +1318,7 @@ def render_memory():
                 for word in memory_test["words"]
             )
             st.markdown(
-                '<div class="StarShield-memory-words" role="group" aria-label="Words to remember">'
+                '<div class="orbit-memory-words" role="group" aria-label="Words to remember">'
                 + word_tags + '</div>', unsafe_allow_html=True,
             )
 
@@ -2786,7 +2786,7 @@ def render_gemini():
 
 
 
-def StarShield_chart(frame, *, x, ys, unit='', height=275):
+def orbit_chart(frame, *, x, ys, unit='', height=275):
     usable = frame[[x, *ys]].copy()
     if usable.empty:
         st.info('No measurements are available for this view.')
@@ -2891,9 +2891,9 @@ def render_identity_card(participant, *, compact=False):
     name = html.escape(profile['full_name'])
     initials = html.escape(''.join(part[0] for part in profile['full_name'].split()[:2]).upper())
     st.markdown(
-        '<div class="StarShield-card"><span class="StarShield-tag">' + html.escape(profile['profile_kind'])
-        + ' PROFILE</span><div class="StarShield-profile"><div class="StarShield-avatar">' + initials
-        + '</div><div><h3>' + name + '</h3><div class="StarShield-caption">'
+        '<div class="orbit-card"><span class="orbit-tag">' + html.escape(profile['profile_kind'])
+        + ' PROFILE</span><div class="orbit-profile"><div class="orbit-avatar">' + initials
+        + '</div><div><h3>' + name + '</h3><div class="orbit-caption">'
         + html.escape(participant) + ' · ' + html.escape(profile_field(profile['role']))
         + '</div></div></div><p>Mission · ' + html.escape(profile_field(profile['mission_name']))
         + '</p><p>Start date · ' + html.escape(profile_field(profile['mission_start_date']))
@@ -3114,7 +3114,7 @@ def render_muscle_summary(participant, kind, *, compact=False):
                     delta += f" ({abs(percentage):.2f}%)"
                 else:
                     delta += ' · Percentage unavailable (zero reference)'
-            st.markdown('<div class="StarShield-card"><div class="StarShield-kicker">'+html.escape(title)+'</div><div class="StarShield-cognitive-value">'+html.escape(value)+'</div><p>'+html.escape(delta)+'</p><div class="StarShield-caption">'+html.escape(current['body_site']+' · '+current['method']+' · '+current['recorded_at'])+'</div></div>',unsafe_allow_html=True)
+            st.markdown('<div class="orbit-card"><div class="orbit-kicker">'+html.escape(title)+'</div><div class="orbit-cognitive-value">'+html.escape(value)+'</div><p>'+html.escape(delta)+'</p><div class="orbit-caption">'+html.escape(current['body_site']+' · '+current['method']+' · '+current['recorded_at'])+'</div></div>',unsafe_allow_html=True)
     st.caption('No estimate is calculated from exercise answers, body weight, mission duration or hospital vital signs. A decrease alone does not establish muscle atrophy or its cause.')
 
 
@@ -3233,11 +3233,11 @@ def selected_participant():
 
 
 def empty_state(title, text):
-    st.markdown(f'<div class="StarShield-empty"><strong>{html.escape(title)}</strong>{html.escape(text)}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="orbit-empty"><strong>{html.escape(title)}</strong>{html.escape(text)}</div>', unsafe_allow_html=True)
 
 
 def section_card(title, text, tag='LOCAL RECORDS'):
-    st.markdown(f'<div class="StarShield-card"><span class="StarShield-tag">{html.escape(tag)}</span><h3 style="margin-top:12px">{html.escape(title)}</h3><p>{html.escape(text)}</p></div>',unsafe_allow_html=True)
+    st.markdown(f'<div class="orbit-card"><span class="orbit-tag">{html.escape(tag)}</span><h3 style="margin-top:12px">{html.escape(title)}</h3><p>{html.escape(text)}</p></div>',unsafe_allow_html=True)
 
 
 def navigate_to(page):
@@ -3281,12 +3281,155 @@ def render_wellbeing():
             current_scale = records.loc[records['mood_scale'].eq(10)].copy()
             if not current_scale.empty:
                 current_scale['checkin_date'] = pd.to_datetime(current_scale['checkin_date'])
-                StarShield_chart(current_scale.sort_values('checkin_date'),x='checkin_date',ys=['mood_score','stress_score','sleep_quality'],unit='Self-reported rating / 10',height=220)
+                orbit_chart(current_scale.sort_values('checkin_date'),x='checkin_date',ys=['mood_score','stress_score','sleep_quality'],unit='Self-reported rating / 10',height=220)
             if records['mood_scale'].eq(5).any(): st.caption('Older mood ratings use a 1–5 scale and are excluded from this 1–10 trend. Raw records retain their original scale.')
     render_daily_checkin()
 
 
+MOOD_LABELS = ['happy', 'neutral', 'surprised', 'sad', 'angry', 'fearful', 'disgusted', 'tired']
+# Moods where the assistant stays silent. Edit this set to change when tips appear.
+MOOD_NO_ACTION = {'happy', 'neutral', 'surprised'}
+MOOD_KIND = {'happy': 'green', 'neutral': 'cyan', 'surprised': 'cyan', 'sad': 'amber',
+             'angry': 'red', 'fearful': 'amber', 'disgusted': 'amber', 'tired': 'amber'}
+MOOD_DEFAULT_TIPS = {
+    'sad': ['Message or call someone you trust on Earth or in the crew.', 'Take a short break away from your task, even 10 minutes.', 'Try a slow breathing round: in for 4, out for 6, five times.'],
+    'angry': ['Pause the task and step away from the source of tension for a few minutes.', 'Slow your breathing: in for 4, out for 6, five times.', 'Write down what happened so you can discuss it calmly later.'],
+    'fearful': ['Slow your breathing and name five things you can see around you.', 'Check the facts of what worries you with a crew member or ground support.', 'Break the next task into one small step.'],
+    'disgusted': ['Take a short break and get some fresh air or a change of surroundings.', 'If something in the environment caused it, report it to the crew.', 'Drink some water and reset before returning to work.'],
+    'tired': ['Take a short rest or a 15 to 20 minute nap if the schedule allows.', 'Drink water and have a light snack.', 'Plan an earlier, consistent sleep time tonight.'],
+}
+MOOD_SCAN_INSTRUCTION = """You classify the visible facial expression in one photo for a wellbeing app.
+Return only JSON with these keys:
+face_detected (boolean), mood (one of: happy, neutral, surprised, sad, angry, fearful, disgusted, tired),
+confidence (number 0 to 1), cues (one short sentence describing visible expression cues),
+recommendations (array of up to 3 short, practical, non-medical suggestions).
+Rules: judge only the visible expression, never identity, age, health or personality.
+Do not diagnose. If no clear face is visible set face_detected to false and confidence to 0.
+If mood is happy, neutral or surprised, recommendations must be an empty array.
+Never mention being an AI in the recommendations; write them as direct tips."""
+
+
+def gemini_mood_scan(api_key, model, image_bytes, mime_type):
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=45000))
+    config = types.GenerateContentConfig(
+        system_instruction=MOOD_SCAN_INSTRUCTION, response_mime_type='application/json',
+        max_output_tokens=2048, temperature=0.2,
+    )
+    contents = [types.Part.from_bytes(data=image_bytes, mime_type=mime_type or 'image/jpeg'),
+                'Classify the visible facial expression in this photo.']
+
+    def call(name):
+        return client.models.generate_content(model=name, contents=contents, config=config)
+
+    try:
+        response = call(model)
+    except Exception as error:
+        if gemini_status(error) == 404 and model != DEFAULT_GEMINI_MODEL:
+            response = call(DEFAULT_GEMINI_MODEL)
+        else:
+            raise
+    return (response.text or '').strip()
+
+
+def parse_mood_scan(text):
+    cleaned = re.sub(r'^```(?:json)?|```$', '', text.strip(), flags=re.M).strip()
+    data = json.loads(cleaned)
+    mood = str(data.get('mood', '')).lower().strip()
+    try:
+        confidence = min(max(float(data.get('confidence', 0)), 0.0), 1.0)
+    except (TypeError, ValueError):
+        confidence = 0.0
+    tips = [str(item).strip()[:170] for item in (data.get('recommendations') or []) if isinstance(item, str) and item.strip()][:3]
+    return {
+        'face_detected': bool(data.get('face_detected', True)),
+        'mood': mood if mood in MOOD_LABELS else 'unclear',
+        'confidence': confidence,
+        'cues': str(data.get('cues', '')).strip()[:220],
+        'tips': tips,
+    }
+
+
+def render_mood_camera():
+    st.subheader('Facial expression check')
+    st.caption('Take a photo and Gemini describes the visible facial expression. An expression is not a diagnosis '
+               'and may not match how you feel. This is an exploratory feature with no clinical validation.')
+    api_key = configured_gemini_key()
+    if not api_key:
+        st.info('Gemini is not configured. Add GEMINI_API_KEY to your .env file, then restart the app.')
+        return
+    participant = selected_participant()
+    consent = st.checkbox('I agree to send my photo to Google Gemini for this analysis. The app does not save the photo.', key='mood_consent')
+    if not consent:
+        st.caption('Tick the box to enable the camera.')
+        return
+    photo = st.camera_input('Camera', key='mood_camera')
+    if photo is None:
+        return
+
+    image_bytes = photo.getvalue()
+    digest = hashlib.sha256(image_bytes).hexdigest()
+    cache = st.session_state.setdefault('mood_cache', {})
+    if digest not in cache:
+        model = st.session_state.get('gemini_model_name') or DEFAULT_GEMINI_MODEL
+        with st.spinner('Reading the expression…'):
+            try:
+                result = parse_mood_scan(gemini_mood_scan(api_key, model, image_bytes, getattr(photo, 'type', 'image/jpeg')))
+            except ImportError:
+                st.error('Install or update Gemini support: py -m pip install -U google-genai')
+                return
+            except (json.JSONDecodeError, AttributeError, TypeError):
+                st.warning('Gemini returned an unreadable answer. Retake the photo and try again.')
+                return
+            except Exception as error:
+                friendly, detail = gemini_error_text(error, api_key)
+                st.error(friendly)
+                with st.expander('Technical details'):
+                    st.code(detail, language=None)
+                return
+        cache[digest] = result
+        if participant and result['face_detected'] and result['mood'] != 'unclear':
+            with closing(sqlite3.connect(app_folder / 'daily_checkins.db', timeout=10)) as connection:
+                with connection:
+                    connection.execute('CREATE TABLE IF NOT EXISTS mood_scans (scan_id TEXT PRIMARY KEY, participant_code TEXT NOT NULL, scanned_at TEXT NOT NULL, mood TEXT NOT NULL, confidence REAL NOT NULL)')
+                    connection.execute('INSERT INTO mood_scans VALUES (?,?,?,?,?)', (str(uuid.uuid4()), participant, datetime.now(timezone.utc).isoformat(), result['mood'], result['confidence']))
+    result = cache[digest]
+
+    if not result['face_detected'] or result['mood'] == 'unclear' or result['confidence'] < 0.5:
+        body = '<p class="ox-quote">No clear expression could be read. Face the camera in good light and retake the photo.</p>'
+        panel = ox_panel('Expression result', body, 'user', ox_tag('Unclear', 'muted'))
+        st.markdown(panel, unsafe_allow_html=True)
+        return
+
+    mood = result['mood']
+    kind = MOOD_KIND[mood]
+    body = (f'<div class="ox-val" style="text-transform:capitalize">{html.escape(mood)}<small>{result["confidence"] * 100:.0f}% confidence</small></div>'
+            f'<div class="ox-bar"><i class="{kind}" style="width:{result["confidence"] * 100:.0f}%"></i></div>')
+    if result['cues']:
+        body += f'<div class="ox-foot"><span>{html.escape(result["cues"])}</span></div>'
+    if mood in MOOD_NO_ACTION:
+        body += '<p class="ox-quote" style="margin-top:12px">Your expression looks positive or settled. Nothing to suggest right now.</p>'
+    else:
+        tips = result['tips'] or MOOD_DEFAULT_TIPS.get(mood, [])
+        tips = tips + ['If this feeling lasts several days, tell your flight surgeon or someone you trust.']
+        body += '<div style="margin-top:12px">' + ''.join(
+            f'<div class="ox-item">{ox_icon("heart", "green")}<div><h5>{html.escape(tip)}</h5></div></div>' for tip in tips) + '</div>'
+    st.markdown(ox_panel('Expression result', body, 'user', ox_tag(mood, kind, dot=True)), unsafe_allow_html=True)
+
+    if participant:
+        with closing(sqlite3.connect(app_folder / 'daily_checkins.db', timeout=10)) as connection:
+            exists = connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='mood_scans'").fetchone()
+            history = pd.read_sql_query('SELECT scanned_at, mood, confidence FROM mood_scans WHERE participant_code = ? ORDER BY scanned_at DESC LIMIT 10', connection, params=(participant,)) if exists else pd.DataFrame()
+        if not history.empty:
+            with st.expander('Recent expression checks (labels only, no photos)'):
+                st.dataframe(history, hide_index=True)
+    st.divider()
+
+
 def render_vision():
+    render_mood_camera()
     participant = selected_participant()
     if not participant:
         empty_state('Choose a participant','Select a local participant code in the sidebar to view vision observations.')
@@ -3410,9 +3553,9 @@ def render_brain_results(participant):
             stamp = str(latest['completed_at'])
         with columns[index % 2]:
             st.markdown(
-                '<div class="StarShield-card"><div class="StarShield-kicker">' + html.escape(task)
-                + '</div><div class="StarShield-cognitive-value">' + html.escape(value)
-                + '</div><p>' + html.escape(detail) + '</p><div class="StarShield-caption">'
+                '<div class="orbit-card"><div class="orbit-kicker">' + html.escape(task)
+                + '</div><div class="orbit-cognitive-value">' + html.escape(value)
+                + '</div><p>' + html.escape(detail) + '</p><div class="orbit-caption">'
                 + html.escape(stamp) + '</div></div>', unsafe_allow_html=True,
             )
     saved_tasks = [task for task, rows in histories.items() if not rows.empty]
@@ -3481,7 +3624,7 @@ def render_anatomy():
             st.session_state['anatomy_selected_organ'] = organ
     with detail:
         info = ORGAN_INFO[organ]
-        st.markdown(f'<span class="StarShield-tag">BODY REGION / {organ.upper()}</span>',unsafe_allow_html=True)
+        st.markdown(f'<span class="orbit-tag">BODY REGION / {organ.upper()}</span>',unsafe_allow_html=True)
         st.subheader(info['title'])
         st.write(info['text'])
         st.link_button('Read NASA research background','https://www.nasa.gov/hrp/risks/')
@@ -3494,10 +3637,10 @@ def render_anatomy():
                 unit = '%' if field=='SpO2' else ('breaths/min' if field=='RESP' else 'bpm')
                 box.metric(field,display_value(reading[field],unit))
                 if reading[f'{field}_imputed']: box.caption('Estimated using this recording’s median')
-            if organ=='Heart': StarShield_chart(recording,x='Time [s]',ys=['HR','PULSE'],unit='bpm',height=200)
+            if organ=='Heart': orbit_chart(recording,x='Time [s]',ys=['HR','PULSE'],unit='bpm',height=200)
             else:
                 chart_field = st.selectbox('Indicator',['RESP','SpO2'])
-                StarShield_chart(recording,x='Time [s]',ys=[chart_field],unit='breaths/min' if chart_field=='RESP' else '%',height=200)
+                orbit_chart(recording,x='Time [s]',ys=[chart_field],unit='breaths/min' if chart_field=='RESP' else '%',height=200)
             st.caption(f'BIDMC source recording {rid}. No person-level link to the selected participant.')
         elif organ=='Bones':
             empty_state('Bone measurements unavailable','No bone density or bone turnover dataset has been connected.')
@@ -3553,14 +3696,14 @@ def render_floating_robot(page):
         encoded = base64.b64encode(robot_path.read_bytes()).decode('ascii')
         robot_style = f'background-image:url("data:image/png;base64,{encoded}")!important;'
     st.markdown('''<style>
-    .st-key-StarShield_robot {position:fixed!important;right:24px;bottom:22px;width:78px!important;z-index:1000;}
-    .st-key-StarShield_robot [data-testid="stPopoverButton"] {width:78px!important;height:78px!important;min-width:78px!important;border-radius:50%!important;border:1px solid #22d3ee88!important;background-color:#14223b!important;background-size:cover!important;background-position:center!important;box-shadow:0 0 26px #22d3ee25!important;ROBOT_STYLE}
-    .st-key-StarShield_robot [data-testid="stPopoverButton"] p {font-size:0!important;}
-    .st-key-StarShield_robot [data-testid="stPopoverButton"] svg {display:none;}
+    .st-key-orbit_robot {position:fixed!important;right:24px;bottom:22px;width:78px!important;z-index:1000;}
+    .st-key-orbit_robot [data-testid="stPopoverButton"] {width:78px!important;height:78px!important;min-width:78px!important;border-radius:50%!important;border:1px solid #22d3ee88!important;background-color:#14223b!important;background-size:cover!important;background-position:center!important;box-shadow:0 0 26px #22d3ee25!important;ROBOT_STYLE}
+    .st-key-orbit_robot [data-testid="stPopoverButton"] p {font-size:0!important;}
+    .st-key-orbit_robot [data-testid="stPopoverButton"] svg {display:none;}
     [data-testid="stPopoverBody"] {background:#0e141d!important;border:1px solid #35506d!important;color:#f0f5ff!important;width:min(430px,94vw)!important;min-width:min(430px,94vw)!important;max-width:min(430px,94vw)!important;max-height:78vh;overflow:auto;}
-    @media(max-width:760px){.st-key-StarShield_robot {right:12px;bottom:14px;}}
+    @media(max-width:760px){.st-key-orbit_robot {right:12px;bottom:14px;}}
     </style>'''.replace('ROBOT_STYLE',robot_style),unsafe_allow_html=True)
-    with st.container(key='StarShield_robot'):
+    with st.container(key='orbit_robot'):
         with st.popover('Open astronaut assistant',help='Ask the StellarShield astronaut robot',width='stretch'):
             st.subheader('Stellar · Gemini assistant')
             organ = st.session_state.get('anatomy_selected_organ','Heart')
@@ -3621,7 +3764,7 @@ PAGES = {
     'Cognitive Tests':('Six project-designed practice activities.','neurology',render_cognitive_page),
     'AI Health Insights':('Statistical differences identified by the saved model.','auto_awesome',render_ai_insights),
     'Interactive Anatomy':('Explore the astronaut body map in 3D.','accessibility_new',render_anatomy),
-    'Vision Log':('Participant-entered vision observations.','visibility',render_vision),
+    'Vision Log':('Camera expression check and participant-entered vision observations.','visibility',render_vision),
     'Medical Records':('Saved local observations and practice results.','folder_shared',render_medical_records),
     'Suit Monitoring':('Spacesuit source availability.','shield',render_suit),
     'Data Center':('Source provenance, downloads and limitations.','database',render_sources),
@@ -3637,7 +3780,7 @@ if 'pending_profile_editor' in st.session_state:
 if st.session_state.get('active_page') not in PAGES: st.session_state['active_page']='Command Center'
 page = st.session_state['active_page']
 with st.sidebar:
-    st.markdown('<div class="StarShield-brand"><span class="ox-ring"></span>StarShield<i>AEROSPACE</i></div><div class="ox-navlabel">Applications &amp; telemetry</div>',unsafe_allow_html=True)
+    st.markdown('<div class="orbit-brand"><span class="ox-ring"></span>ORBIT OS<i>AEROSPACE</i></div><div class="ox-navlabel">Applications &amp; telemetry</div>',unsafe_allow_html=True)
     for name,(_,icon,_) in PAGES.items():
         st.button(name,key='nav_'+name,icon=f':material/{icon}:',width='stretch',type='primary' if page==name else 'secondary',on_click=navigate_to,args=(name,))
     st.divider()
@@ -3659,5 +3802,5 @@ for notice_key in ['profile_saved_notice','muscle_saved_notice']:
     if notice_key in st.session_state:
         st.success(st.session_state.pop(notice_key))
 renderer()
-st.markdown('<div class="StarShield-footer">StarShield · EXPLORATORY PROTOTYPE · SOURCE DATASETS ARE INDEPENDENT · NO CLINICAL VALIDATION</div>',unsafe_allow_html=True)
+st.markdown('<div class="orbit-footer">ORBIT OS · EXPLORATORY PROTOTYPE · SOURCE DATASETS ARE INDEPENDENT · NO CLINICAL VALIDATION</div>',unsafe_allow_html=True)
 render_floating_robot(page)
